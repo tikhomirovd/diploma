@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 # load_dotenv before importing project modules so env vars are available
 load_dotenv()
 
+from src.baseline import run_erc_baseline
 from src.data import Conversation, load_split
 from src.erc_graph import run_erc
 from src.evaluation import ERCResult, compute_erc_accuracy, save_erc_results
@@ -35,6 +36,7 @@ def run(
     split: str = "test",
     n: int | None = None,
     out: str = "data/results/erc_results.json",
+    mode: str = "insideout",
 ) -> None:
     print(f"Loading '{split}' split …")
     conversations: list[Conversation] = load_split(split)  # type: ignore[arg-type]
@@ -42,13 +44,16 @@ def run(
         conversations = conversations[:n]
 
     total = len(conversations)
-    print(f"Running ERC on {total} conversations …\n")
+    print(f"Running ERC [{mode}] on {total} conversations …\n")
 
     results: list[ERCResult] = []
     for i, conv in enumerate(conversations, 1):
         history = conv.format_history()
         try:
-            output = run_erc(history)
+            if mode == "baseline":
+                output = run_erc_baseline(history)
+            else:
+                output = run_erc(history)
             predicted = str(output.get("final_emotion", "")).strip().lower()
             reasoning = str(output.get("reasoning", ""))
             assessments = dict(output.get("assessments", {}))
@@ -87,12 +92,18 @@ def main() -> None:
     parser.add_argument("--split", default="test", choices=["train", "valid", "test"])
     parser.add_argument("--n", type=int, default=None, help="Max conversations to process")
     parser.add_argument("--out", default="data/results/erc_results.json")
+    parser.add_argument(
+        "--mode",
+        default="insideout",
+        choices=["insideout", "baseline"],
+        help="insideout: full multi-agent graph; baseline: single LLM call",
+    )
     args = parser.parse_args()
 
     # Ensure output directory exists
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
 
-    run(split=args.split, n=args.n, out=args.out)
+    run(split=args.split, n=args.n, out=args.out, mode=args.mode)
 
 
 if __name__ == "__main__":

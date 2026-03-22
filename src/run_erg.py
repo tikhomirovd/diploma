@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 # load_dotenv before importing project modules so env vars are available
 load_dotenv()
 
+from src.baseline import run_erg_baseline
 from src.data import Conversation, load_split
 from src.erg_graph import run_erg
 from src.evaluation import (
@@ -87,6 +88,7 @@ def run(
     n: int | None = None,
     out: str = "data/results/erg_results.json",
     judge: bool = False,
+    mode: str = "insideout",
 ) -> None:
     print(f"Loading '{split}' split …")
     conversations: list[Conversation] = load_split(split)  # type: ignore[arg-type]
@@ -94,19 +96,16 @@ def run(
         conversations = conversations[:n]
 
     total = len(conversations)
-    print(f"Running ERG on {total} conversations …\n")
+    print(f"Running ERG [{mode}] on {total} conversations …\n")
 
     results: list[ERGResult] = []
     for i, conv in enumerate(conversations, 1):
         # For ERG we predict the listener's reply to the last speaker turn.
-        history, _last_speaker_text = conv.format_history_for_erg()
-        # Ground-truth reference: last utterance in the conversation
-        # (the listener's actual reply, if it exists).
-        last_utt = conv.utterances[-1]
-        reference = last_utt.text if last_utt.speaker_idx == "0" else ""
+        # format_history_for_erg returns (history_without_last, last_listener_turn).
+        history, reference = conv.format_history_for_erg()
 
         try:
-            output = run_erg(history)
+            output = run_erg_baseline(history) if mode == "baseline" else run_erg(history)
             generated = str(output.get("final_response", "")).strip()
             assumed_emotion = str(output.get("assumed_emotion", ""))
             proposed = dict(output.get("proposed_responses", {}))
@@ -165,11 +164,17 @@ def main() -> None:
         action="store_true",
         help="Run LLM-as-judge scoring (uses ASSESSOR_MODEL env var)",
     )
+    parser.add_argument(
+        "--mode",
+        default="insideout",
+        choices=["insideout", "baseline"],
+        help="insideout: full multi-agent graph; baseline: single LLM call",
+    )
     args = parser.parse_args()
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
 
-    run(split=args.split, n=args.n, out=args.out, judge=args.judge)
+    run(split=args.split, n=args.n, out=args.out, judge=args.judge, mode=args.mode)
 
 
 if __name__ == "__main__":

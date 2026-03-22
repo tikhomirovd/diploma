@@ -6,6 +6,7 @@ from typing import Any
 
 import nltk
 from beartype import beartype
+from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
 from rouge_score import rouge_scorer
 
 from src.data import map_to_18_classes
@@ -77,39 +78,46 @@ def _tokenize(text: str) -> list[str]:
     return list(nltk.word_tokenize(text.lower()))
 
 
+_SMOOTHER = SmoothingFunction().method1
+
+_BLEU_WEIGHTS: dict[int, tuple[float, ...]] = {
+    1: (1.0, 0.0, 0.0, 0.0),
+    2: (0.5, 0.5, 0.0, 0.0),
+    3: (1 / 3, 1 / 3, 1 / 3, 0.0),
+    4: (0.25, 0.25, 0.25, 0.25),
+}
+
+
 @beartype
 def _bleu_n(reference_tokens: list[str], hypothesis_tokens: list[str], n: int) -> float:
-    """Compute BLEU-n (precision of n-grams) * 100."""
-    if len(hypothesis_tokens) < n:
-        return 0.0
+    """Compute sentence BLEU-n (with brevity penalty) scaled to 0–100.
 
-    ref_ngrams: dict[tuple[str, ...], int] = {}
-    for i in range(len(reference_tokens) - n + 1):
-        ng = tuple(reference_tokens[i : i + n])
-        ref_ngrams[ng] = ref_ngrams.get(ng, 0) + 1
-
-    matches = 0
-    hyp_ngrams: dict[tuple[str, ...], int] = {}
-    for i in range(len(hypothesis_tokens) - n + 1):
-        ng = tuple(hypothesis_tokens[i : i + n])
-        hyp_ngrams[ng] = hyp_ngrams.get(ng, 0) + 1
-
-    for ng, count in hyp_ngrams.items():
-        matches += min(count, ref_ngrams.get(ng, 0))
-
-    total_hyp = len(hypothesis_tokens) - n + 1
-    return round(100.0 * matches / total_hyp, 4) if total_hyp > 0 else 0.0
+    Uses nltk sentence_bleu with method1 smoothing so short hypotheses do not
+    produce NaN.  Weights concentrate all mass on order-n n-grams, matching
+    the BLEU-1/2/3/4 columns reported in EmpatheticDialogues papers.
+    """
+    score: float = sentence_bleu(
+        [reference_tokens],
+        hypothesis_tokens,
+        weights=_BLEU_WEIGHTS[n],
+        smoothing_function=_SMOOTHER,
+    )
+    return round(100.0 * score, 4)
 
 
 @beartype
 def _distinct_1(texts: list[str]) -> float:
-    """Compute Distinct-1: ratio of unique unigrams to total unigrams * 100."""
+    """Compute Distinct-1: ratio of unique unigrams to total unigrams (0–1 scale).
+
+    The paper (and prior work such as MoEL/MIME) reports Dist-1 as a fraction,
+    e.g. 0.84, not as a percentage.
+    """
     tokens: list[str] = []
     for t in texts:
         tokens.extend(_tokenize(t))
     if not tokens:
         return 0.0
-    return round(100.0 * len(set(tokens)) / len(tokens), 4)
+    return round(len(set(tokens)) / len(tokens), 4)
 
 
 @beartype

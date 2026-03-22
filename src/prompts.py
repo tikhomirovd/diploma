@@ -167,6 +167,56 @@ def erg_aggregate_user(
 
 
 # ---------------------------------------------------------------------------
+# Baseline prompts (single-LLM, no multi-agent layer)
+# ---------------------------------------------------------------------------
+
+
+@beartype
+def baseline_erc_system() -> str:
+    """System prompt for the single-LLM ERC baseline."""
+    return (
+        "You are an empathetic conversation analyst. "
+        "Read the conversation and identify the primary emotion "
+        "the SPEAKER (the person sharing their story) is feeling.\n\n"
+        "Respond with a JSON object and nothing else:\n"
+        '{"final_emotion": "<emotion>", "reasoning": "<brief explanation>"}\n\n'
+        f"The label must be one of: {EMOTIONS_32_LIST}."
+    )
+
+
+@beartype
+def baseline_erc_user(conversation: str) -> str:
+    """User message for the single-LLM ERC baseline."""
+    return (
+        f"Conversation:\n{conversation}\n\n"
+        "What is the speaker's primary emotion? "
+        "Respond with a JSON object only."
+    )
+
+
+@beartype
+def baseline_erg_system() -> str:
+    """System prompt for the single-LLM ERG baseline."""
+    return (
+        "You are an empathetic conversational assistant. "
+        "Read the conversation and generate a compassionate, contextually "
+        "appropriate listener reply that acknowledges the speaker's feelings.\n\n"
+        "Respond with a JSON object and nothing else:\n"
+        '{"final_response": "<your empathetic reply>", "reasoning": "<brief explanation>"}'
+    )
+
+
+@beartype
+def baseline_erg_user(conversation: str) -> str:
+    """User message for the single-LLM ERG baseline."""
+    return (
+        f"Conversation:\n{conversation}\n\n"
+        "Generate an empathetic listener response. "
+        "Respond with a JSON object only."
+    )
+
+
+# ---------------------------------------------------------------------------
 # ERG assessor (quality evaluation by LLM-as-judge)
 # ---------------------------------------------------------------------------
 

@@ -45,7 +45,11 @@ EMOTIONS_32: list[str] = [
     "trusting",
 ]
 
-# Coarser 18-class mapping used in Table 2 of the paper.
+# Coarser 18-class mapping referenced in Table 2 of the paper.
+# NOTE: the paper does not publish the exact mapping; this is a semantic
+# reconstruction based on Plutchik's wheel of emotions and the standard
+# groupings used in prior EmpatheticDialogues work (MoEL, MIME, etc.).
+# If the authors release their mapping, update this dict accordingly.
 MAPPING_32_TO_18: dict[str, str] = {
     "afraid": "fear",
     "angry": "anger",
@@ -101,29 +105,26 @@ class Conversation:
         """Format the dialogue as a plain-text string for prompt injection."""
         lines: list[str] = []
         for utt in self.utterances:
-            role = "Speaker" if utt.speaker_idx != "0" else "Listener"
+            role = "Speaker" if utt.speaker_idx == "0" else "Listener"
             lines.append(f"{role}: {utt.text}")
         return "\n".join(lines)
 
     @beartype
     def format_history_for_erg(self) -> tuple[str, str]:
-        """Return (history_without_last, last_speaker_utterance) for ERG.
+        """Return (history_without_last, last_listener_utterance) for ERG.
 
-        The ERG task: given dialogue history, generate the listener's reply
-        to the last speaker turn.
+        The ERG task: given dialogue history up to (but not including) the
+        final listener turn, generate that listener reply.  The last utterance
+        in EmpatheticDialogues is always a Listener turn (speaker_idx != "0"),
+        which serves as the reference response.
         """
-        history_lines: list[str] = []
-        last_speaker_text = ""
-        for utt in self.utterances:
-            role = "Speaker" if utt.speaker_idx != "0" else "Listener"
-            text = f"{role}: {utt.text}"
-            history_lines.append(text)
-            if utt.speaker_idx != "0":
-                last_speaker_text = utt.text
-        # Drop the last utterance from history if it's the listener's reply
-        # (we want to predict it); keep everything up to last speaker turn.
-        history = "\n".join(history_lines[:-1]) if history_lines else ""
-        return history, last_speaker_text
+        if len(self.utterances) < 2:
+            return "", ""
+        history_text = "\n".join(
+            f'{"Speaker" if u.speaker_idx == "0" else "Listener"}: {u.text}'
+            for u in self.utterances[:-1]
+        )
+        return history_text, self.utterances[-1].text
 
 
 @beartype

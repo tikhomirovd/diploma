@@ -16,7 +16,6 @@ dependencies = [
 dev = [
     "mypy>=1.19.1",
     "pyright>=1.1.408",
-    "pytest>=9.0.2",
 ]
 
 [tool.mypy]
@@ -27,5 +26,3 @@ python_version = "3.12"
 typeCheckingMode = "strict"
 pythonVersion = "3.12"
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]

@@ -71,14 +71,17 @@ htmlcov/
 .tox/
 
 # Data / outputs
-data/raw/
-data/processed/
+data/
 outputs/
 artifacts/
 *.pkl
 *.pickle
 *.h5
 *.hdf5
+*.csv
+*.tsv
+*.jsonl
+*.parquet
 
 # LLM / API secrets
 openai_key*

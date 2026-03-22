@@ -72,8 +72,9 @@ logs/
 htmlcov/
 .tox/
 
-# Data / outputs
+# Data / outputs (raw data and large result JSONs are not tracked)
 data/
+!data/results/README.md
 outputs/
 artifacts/
 *.pkl

@@ -26,6 +26,8 @@ def build_llm(model_env_var: str, temperature: float = 0.0) -> BaseChatModel:
         temperature=temperature,
         openai_api_key=api_key,
         openai_api_base=OPENROUTER_BASE_URL,
+        max_retries=8,
+        request_timeout=120,
     )
 
 

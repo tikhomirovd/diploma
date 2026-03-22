@@ -13,6 +13,17 @@
   "pylint.enabled": false,
 
   // ---------------------------------------------------------------------------
+  // Pylance false-positive overrides
+  // These diagnostics are clean in `uv run pyright` (our CI source of truth).
+  // Pylance 2025.5.1 bundles a newer pyright with stricter Pydantic v2
+  // inference that produces false positives on langchain-core's BaseMessage
+  // constructors (SystemMessage, HumanMessage).
+  // ---------------------------------------------------------------------------
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportCallIssue": "none"
+  },
+
+  // ---------------------------------------------------------------------------
   // Formatting & linting — ruff handles both
   // ---------------------------------------------------------------------------
   "editor.defaultFormatter": "charliermarsh.ruff",

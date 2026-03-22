@@ -1,0 +1,91 @@
+{
+  // ---------------------------------------------------------------------------
+  // Python interpreter — project's uv-managed venv
+  // ---------------------------------------------------------------------------
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python3",
+
+  // ---------------------------------------------------------------------------
+  // Type checking — Pylance/pyright only (mypy extension disabled to avoid
+  // duplicate, contradictory errors)
+  // ---------------------------------------------------------------------------
+  "python.analysis.typeCheckingMode": "strict",
+  "mypy-type-checker.enabled": false,
+  "pylint.enabled": false,
+
+  // ---------------------------------------------------------------------------
+  // Formatting & linting — ruff handles both
+  // ---------------------------------------------------------------------------
+  "editor.defaultFormatter": "charliermarsh.ruff",
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+
+  // ---------------------------------------------------------------------------
+  // Auto-save — saves after you stop typing for 1 second
+  // ---------------------------------------------------------------------------
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+
+  // ---------------------------------------------------------------------------
+  // Editor quality-of-life
+  // ---------------------------------------------------------------------------
+
+  // Show whitespace only on selected text (less noise)
+  "editor.renderWhitespace": "selection",
+
+  // Draw a vertical line at the ruff line-length limit
+  "editor.rulers": [100],
+
+  // Keep cursor stable when scrolling with mouse wheel
+  "editor.cursorSmoothCaretAnimation": "on",
+
+  // Highlight the current line
+  "editor.renderLineHighlight": "all",
+
+  // Minimap off — rarely useful, saves horizontal space
+  "editor.minimap.enabled": false,
+
+  // Smooth scrolling
+  "editor.smoothScrolling": true,
+  "workbench.list.smoothScrolling": true,
+
+  // Show full file path in the window title
+  "window.title": "${rootName} — ${activeEditorMedium}",
+
+  // ---------------------------------------------------------------------------
+  // Terminal — use the venv Python automatically in the integrated terminal
+  // ---------------------------------------------------------------------------
+  "terminal.integrated.env.osx": {
+    "VIRTUAL_ENV": "${workspaceFolder}/.venv",
+    "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}"
+  },
+
+  // ---------------------------------------------------------------------------
+  // Explorer
+  // ---------------------------------------------------------------------------
+
+  // Hide noisy generated folders from the file tree
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.mypy_cache": true,
+    "**/.ruff_cache": true,
+    "**/.pytest_cache": true,
+    "**/.venv": true
+  },
+
+  // ---------------------------------------------------------------------------
+  // Git
+  // ---------------------------------------------------------------------------
+
+  // Confirm before sync (push/pull) — avoids accidental pushes
+  "git.confirmSync": true,
+
+  // Auto-fetch remotes every few minutes so the status bar stays current
+  "git.autofetch": true
+}

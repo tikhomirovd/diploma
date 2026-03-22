@@ -29,12 +29,13 @@ ENV/
 # uv
 .uv/
 
-# Type checking
+# Type checking / linting caches
 .mypy_cache/
 .pyright/
 .dmypy.json
 dmypy.json
 pyrightconfig.json
+.ruff_cache/
 
 # Environment variables
 .env
@@ -43,7 +44,8 @@ pyrightconfig.json
 
 # IDE
 .idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
 *.swp
 *.swo
 *~

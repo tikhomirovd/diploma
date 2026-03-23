@@ -85,7 +85,11 @@ def _format_judge_table(scores: dict[str, float]) -> str:
 
 @beartype
 def _load_checkpoint(path: str) -> dict[str, ERGResult]:
-    """Load existing results from disk (for resume support)."""
+    """Load existing results from disk (for resume support).
+
+    Results with empty generated text (API failures) are excluded so they
+    are automatically retried on the next run.
+    """
     p = Path(path)
     if not p.exists():
         return {}
@@ -102,6 +106,7 @@ def _load_checkpoint(path: str) -> dict[str, ERGResult]:
                 judge_scores=r.get("judge_scores", {}),
             )
             for r in raw
+            if r.get("generated")  # skip failed (empty) results so they get retried
         }
     except Exception:
         return {}

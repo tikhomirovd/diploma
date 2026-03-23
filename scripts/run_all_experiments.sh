@@ -15,6 +15,8 @@ CHECKPOINT=50           # checkpoint every N conversations
 LOG_DIR="logs"
 RESULTS_DIR="data/results"
 
+export PYTHONUNBUFFERED=1   # disable Python output buffering so logs fill in real-time
+
 mkdir -p "$LOG_DIR" "$RESULTS_DIR/test" "$RESULTS_DIR/valid"
 
 run_experiment() {
@@ -31,12 +33,18 @@ run_experiment() {
     echo "  Started: $(date '+%Y-%m-%d %H:%M:%S')"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    uv run python -m "src.run_${task}" \
+    # Add a small inter-conversation sleep for insideout to ease rate pressure
+    # (insideout fires 5-7 parallel calls per conversation)
+    local sleep_arg=0
+    if [[ "$mode" == "insideout" ]]; then sleep_arg=3; fi
+
+    uv run python -u -m "src.run_${task}" \
         --split "$split" \
         --n "$N" \
         --mode "$mode" \
         --out "$out" \
         --checkpoint "$CHECKPOINT" \
+        --sleep "$sleep_arg" \
         2>&1 | tee "$log"
 
     echo "  Finished: $(date '+%Y-%m-%d %H:%M:%S')"
@@ -50,15 +58,15 @@ echo " Started: $(date '+%Y-%m-%d %H:%M:%S')"
 echo "=================================================="
 
 # --- test split (primary evaluation) ---
-run_experiment erc baseline test
+run_experiment erc baseline  test
 run_experiment erc insideout test
-run_experiment erg baseline test
+run_experiment erg baseline  test
 run_experiment erg insideout test
 
 # --- valid split ---
-run_experiment erc baseline valid
+run_experiment erc baseline  valid
 run_experiment erc insideout valid
-run_experiment erg baseline valid
+run_experiment erg baseline  valid
 run_experiment erg insideout valid
 
 echo ""
